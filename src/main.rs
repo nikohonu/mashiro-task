@@ -1,6 +1,8 @@
 extern crate dirs;
 mod add;
+mod now;
 mod task;
+mod paths;
 
 use clap::{Parser, Subcommand};
 
@@ -15,13 +17,14 @@ struct Cli {
 enum Commands {
     /// Create a task
     Add(add::AddArgs),
+    Now(now::NowArgs),
 }
 
 fn main() {
     let cli = Cli::parse();
-
     match &cli.command {
         Some(Commands::Add(cmd)) => cmd.run(),
-        _ => {}
+        Some(Commands::Now(cmd)) => cmd.run(),
+        _ => now::NowArgs {}.run(),
     };
 }

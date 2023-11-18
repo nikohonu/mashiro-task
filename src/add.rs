@@ -1,16 +1,15 @@
 extern crate dirs;
 
-
 use crate::task::Task;
 
-use chrono::{NaiveDateTime};
+use chrono::NaiveDateTime;
+
+
 
 use uuid::Uuid;
-#[derive(clap::Args)]
+#[derive(clap::Args, Debug)]
 pub struct AddArgs {
     name: String,
-    // #[arg(short('i'), long)]
-    // priority: Option<char>,
     #[arg(short, long, default_value_t = String::from("Inbox"))]
     project: String,
     #[arg(short, long)]

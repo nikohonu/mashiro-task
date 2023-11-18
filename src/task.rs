@@ -1,10 +1,8 @@
-use crate::paths::{self, get_tasks_path};
-use chrono::{NaiveDateTime};
-use csv::{WriterBuilder};
+use crate::paths::get_tasks_path;
+use chrono::NaiveDateTime;
+use csv::WriterBuilder;
 use serde::{Deserialize, Serialize};
-use std::{
-    fs::{OpenOptions},
-};
+use std::fs::OpenOptions;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Interval {
@@ -32,7 +30,7 @@ pub struct Task {
 
 impl Task {
     pub fn get_tasks() -> Vec<Task> {
-        let tasks_path = paths::get_tasks_path();
+        let tasks_path = get_tasks_path();
         let file = std::fs::File::open(tasks_path).expect("Can't open file");
         let mut reader = csv::Reader::from_reader(file);
         reader

@@ -1,13 +1,10 @@
 use crate::{paths, task::Task};
 use chrono::{Local, NaiveDate};
-
 use prettytable::row;
-use rand::{seq::SliceRandom};
+use rand::seq::SliceRandom;
 use serde::{Deserialize, Serialize};
 use serde_json;
-use std::{
-    fs::{OpenOptions},
-};
+use std::fs::OpenOptions;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 struct NowState {
@@ -35,7 +32,7 @@ fn load_state() -> NowState {
     }
 }
 
-#[derive(clap::Args)]
+#[derive(clap::Args, Debug)]
 pub struct NowArgs {}
 
 fn get_task_by_uuid(tasks: &Vec<Task>, uuid: &str) -> Option<Task> {

@@ -53,8 +53,9 @@ impl NowArgs {
         let mut selected_tasks: Vec<Task> = vec![];
         if now_state.date == now.date() && !now_state.tasks.is_empty() {
             for uuid in now_state.tasks {
-                selected_tasks
-                    .push(get_task_by_uuid(&all_tasks, uuid.as_str()).expect("Can't add task"))
+                if let Some(task) = get_task_by_uuid(&all_tasks, uuid.as_str()) {
+                    selected_tasks.push(task)
+                }
             }
         } else {
             println!("{:?}", now_state);
@@ -102,7 +103,14 @@ impl NowArgs {
             });
         }
         let mut table = prettytable::Table::new();
-        table.set_titles(row!["UUID", "Name", "Project", "Schedule", "Recurrence"]);
+        table.set_titles(row![
+            "UUID",
+            "Id",
+            "Name",
+            "Project",
+            "Schedule",
+            "Recurrence"
+        ]);
         for task in &selected_tasks {
             let schedule = if let Some(s) = task.schedule {
                 s.to_string()
@@ -116,6 +124,7 @@ impl NowArgs {
             };
             table.add_row(row![
                 task.uuid,
+                task.id,
                 task.name,
                 task.project,
                 schedule,

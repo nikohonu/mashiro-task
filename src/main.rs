@@ -1,6 +1,7 @@
 extern crate dirs;
 mod add;
 mod completion;
+mod regenerate_ids;
 mod now;
 mod paths;
 mod task;
@@ -21,6 +22,7 @@ enum Commands {
     Add(add::AddArgs),
     Completion(completion::CompletionArgs),
     Now(now::NowArgs),
+    RegenerateIds(regenerate_ids::RegenerateIdsArgs),
 }
 
 fn main() {
@@ -30,6 +32,7 @@ fn main() {
         Some(Commands::Add(cmd)) => cmd.run(),
         Some(Commands::Completion(cmd)) => cmd.run(&mut Cli::command()),
         Some(Commands::Now(cmd)) => cmd.run(),
+        Some(Commands::RegenerateIds(cmd)) => cmd.run(),
         _ => now::NowArgs {}.run(),
     }
 }

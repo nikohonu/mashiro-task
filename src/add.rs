@@ -4,8 +4,6 @@ use crate::task::Task;
 
 use chrono::NaiveDateTime;
 
-
-
 use uuid::Uuid;
 #[derive(clap::Args, Debug)]
 pub struct AddArgs {
@@ -36,6 +34,7 @@ impl AddArgs {
         //     self.name, self.project, self.recurrence_type, self.recurrence_unit
         // );
         let t = Task {
+            id: Task::get_new_id(),
             uuid: Uuid::new_v4().to_string(),
             name: self.name.to_owned(),
             project: self.project.to_owned(),

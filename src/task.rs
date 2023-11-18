@@ -13,6 +13,7 @@ pub struct Interval {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Task {
     pub uuid: String,
+    pub id: i64,
     pub name: String,
     pub project: String,
     pub schedule: Option<NaiveDateTime>,
@@ -31,12 +32,15 @@ pub struct Task {
 impl Task {
     pub fn get_tasks() -> Vec<Task> {
         let tasks_path = get_tasks_path();
-        let file = std::fs::File::open(tasks_path).expect("Can't open file");
-        let mut reader = csv::Reader::from_reader(file);
-        reader
-            .deserialize::<Task>()
-            .map(|x| x.expect("Can't read tasks files"))
-            .collect()
+        if let Ok(file) = std::fs::File::open(tasks_path) {
+            let mut reader = csv::Reader::from_reader(file);
+            reader
+                .deserialize::<Task>()
+                .map(|x| x.expect("Can't read tasks files"))
+                .collect()
+        } else {
+            Vec::new()
+        }
     }
     pub fn append(task: &Task) {
         let tasks_path = get_tasks_path();
@@ -51,6 +55,32 @@ impl Task {
             .has_headers(is_header)
             .from_writer(file);
         wrt.serialize(task).expect("I can't write new record.");
+        wrt.flush().expect("I cant't write in file.");
+    }
+
+    pub fn get_new_id() -> i64 {
+        let tasks = Task::get_tasks();
+        let mut index = 0;
+        for task in tasks {
+            index = std::cmp::max(task.id, index);
+        }
+        index + 1
+    }
+
+    pub fn regenerate_ids() {
+        let tasks = Task::get_tasks();
+        let tasks_path = get_tasks_path();
+        let file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .open(tasks_path)
+            .expect("Can't open file");
+        let mut wrt = WriterBuilder::new().has_headers(true).from_writer(file);
+        for (id, task) in tasks.iter().enumerate() {
+            let mut new_task = task.clone();
+            new_task.id = id as i64 + 1;
+            wrt.serialize(task).expect("I can't write new record.");
+        }
         wrt.flush().expect("I cant't write in file.");
     }
 }

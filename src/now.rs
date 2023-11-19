@@ -1,11 +1,9 @@
-use crate::{task::Task};
-use chrono::{Local};
+use crate::task::Task;
+use chrono::Local;
 
 use rand::seq::SliceRandom;
 
-
 use std::cmp::max;
-
 
 #[derive(clap::Args, Debug)]
 pub struct NowArgs {}
@@ -37,8 +35,7 @@ impl NowArgs {
                 if now_date == today {
                     now_tasks.push(task.clone());
                 }
-            }
-            if let Some(uuid) = &task.required_task {
+            } else if let Some(uuid) = &task.required_task {
                 if get_task_by_uuid(&scheduled_tasks, uuid.as_str()).is_none() {
                     relevant_tasks.push(task.clone())
                 }
@@ -61,10 +58,9 @@ impl NowArgs {
             let mut have_required = 0;
             let mut have_optional = 0;
             for task in &now_tasks {
-                if required_tasks.contains(&task) {
+                if task.required {
                     have_required += 1
-                }
-                if optional_tasks.contains(&task) {
+                } else {
                     have_optional += 1
                 }
             }
@@ -72,35 +68,23 @@ impl NowArgs {
             let mut need_optional = max(1 - have_optional, 0);
             while need_required != 0 && !required_tasks.is_empty() {
                 if let Some(task) = required_tasks.pop() {
-                    if !now_tasks.contains(&task) {
-                        need_required -= 1;
-                        now_tasks.push(task);
-                        println!("a")
-                    }
+                    need_required -= 1;
+                    now_tasks.push(task);
                 }
             }
             while need_optional != 0 && !optional_tasks.is_empty() {
                 if let Some(task) = optional_tasks.pop() {
-                    if !now_tasks.contains(&task) {
-                        need_optional -= 1;
-                        now_tasks.push(task);
-                        println!("b")
-                    }
+                    need_optional -= 1;
+                    now_tasks.push(task);
                 }
             }
             while (!required_tasks.is_empty() || !optional_tasks.is_empty()) && now_tasks.len() < 3
             {
                 if let Some(task) = required_tasks.pop() {
-                    if !now_tasks.contains(&task) {
-                        now_tasks.push(task);
-                        println!("c")
-                    }
+                    now_tasks.push(task);
                 }
                 if let Some(task) = optional_tasks.pop() {
-                    if !now_tasks.contains(&task) {
-                        now_tasks.push(task);
-                        println!("d")
-                    }
+                    now_tasks.push(task);
                 }
             }
         }

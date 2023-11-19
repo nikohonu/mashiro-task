@@ -1,36 +1,11 @@
-use crate::{paths, task::Task};
-use chrono::{Local, NaiveDate};
-use prettytable::row;
+use crate::{task::Task};
+use chrono::{Local};
+
 use rand::seq::SliceRandom;
-use serde::{Deserialize, Serialize};
-use serde_json;
-use std::fs::OpenOptions;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-struct NowState {
-    date: NaiveDate,
-    tasks: Vec<String>,
-}
 
-fn save_state(now_state: NowState) {
-    let now_state_path = paths::get_now_state_path();
-    let writer = OpenOptions::new()
-        .create(true)
-        .write(true)
-        .open(now_state_path)
-        .expect("Can't open file");
-    serde_json::to_writer_pretty(writer, &now_state).expect("Can't deserialize")
-}
-fn load_state() -> NowState {
-    let now_state_path = paths::get_now_state_path();
-    match OpenOptions::new().read(true).open(now_state_path) {
-        Ok(r) => serde_json::from_reader(r).expect("Can't parce NowState"),
-        _ => NowState {
-            date: Local::now().naive_local().date(),
-            tasks: Vec::new(),
-        },
-    }
-}
+use std::cmp::max;
+
 
 #[derive(clap::Args, Debug)]
 pub struct NowArgs {}
@@ -46,91 +21,93 @@ fn get_task_by_uuid(tasks: &Vec<Task>, uuid: &str) -> Option<Task> {
 
 impl NowArgs {
     pub fn run(&self) {
-        println!("Now");
         let now = Local::now().naive_local();
-        let now_state = load_state();
-        let mut all_tasks = Task::get_tasks();
-        let mut selected_tasks: Vec<Task> = vec![];
-        if now_state.date == now.date() && !now_state.tasks.is_empty() {
-            for uuid in now_state.tasks {
-                if let Some(task) = get_task_by_uuid(&all_tasks, uuid.as_str()) {
-                    selected_tasks.push(task)
+        let today = now.date();
+        let tasks = Task::all();
+        let mut scheduled_tasks = Vec::new();
+        for task in &tasks {
+            if task.schedule <= now {
+                scheduled_tasks.push(task.clone())
+            }
+        }
+        let mut now_tasks = Vec::new();
+        let mut relevant_tasks = Vec::new();
+        for task in &scheduled_tasks {
+            if let Some(now_date) = task.now_date {
+                if now_date == today {
+                    now_tasks.push(task.clone());
                 }
             }
-        } else {
-            println!("{:?}", now_state);
-            let mut rng = rand::thread_rng();
-            all_tasks.shuffle(&mut rng);
-            let mut relevant_tasks: Vec<Task> = vec![];
-            for task in &all_tasks {
-                if let Some(schedule) = task.schedule {
-                    if schedule < now {
-                        relevant_tasks.push(task.clone())
-                    }
-                } else {
+            if let Some(uuid) = &task.required_task {
+                if get_task_by_uuid(&scheduled_tasks, uuid.as_str()).is_none() {
                     relevant_tasks.push(task.clone())
                 }
+            } else {
+                relevant_tasks.push(task.clone())
             }
-            let mut tasks: Vec<Task> = vec![];
-            for task in &relevant_tasks {
-                if let Some(uuid) = &task.required_task {
-                    if get_task_by_uuid(&relevant_tasks, uuid.as_str()).is_none() {
-                        tasks.push(task.clone())
+        }
+        relevant_tasks.shuffle(&mut rand::thread_rng());
+        let mut required_tasks: Vec<Task> = relevant_tasks
+            .clone()
+            .into_iter()
+            .filter(|task| task.required)
+            .collect();
+        let mut optional_tasks: Vec<Task> = relevant_tasks
+            .into_iter()
+            .filter(|task| !task.required)
+            .collect();
+        let need = 3 - now_tasks.len();
+        if need > 0 {
+            let mut have_required = 0;
+            let mut have_optional = 0;
+            for task in &now_tasks {
+                if required_tasks.contains(&task) {
+                    have_required += 1
+                }
+                if optional_tasks.contains(&task) {
+                    have_optional += 1
+                }
+            }
+            let mut need_required = max(2 - have_required, 0);
+            let mut need_optional = max(1 - have_optional, 0);
+            while need_required != 0 && !required_tasks.is_empty() {
+                if let Some(task) = required_tasks.pop() {
+                    if !now_tasks.contains(&task) {
+                        need_required -= 1;
+                        now_tasks.push(task);
+                        println!("a")
                     }
-                } else {
-                    tasks.push(task.clone())
                 }
             }
-            let mut required_tasks: Vec<Task> = tasks
-                .clone()
-                .into_iter()
-                .filter(|task| task.required)
-                .collect();
-            let mut optional_tasks: Vec<Task> =
-                tasks.into_iter().filter(|task| !task.required).collect();
-            while selected_tasks.len() < 3 {
+            while need_optional != 0 && !optional_tasks.is_empty() {
                 if let Some(task) = optional_tasks.pop() {
-                    selected_tasks.push(task)
-                } else if let Some(task) = required_tasks.pop() {
-                    selected_tasks.push(task)
-                } else {
-                    break;
+                    if !now_tasks.contains(&task) {
+                        need_optional -= 1;
+                        now_tasks.push(task);
+                        println!("b")
+                    }
                 }
             }
-            save_state(NowState {
-                date: now.date(),
-                tasks: selected_tasks.clone().into_iter().map(|x| x.uuid).collect(),
-            });
+            while (!required_tasks.is_empty() || !optional_tasks.is_empty()) && now_tasks.len() < 3
+            {
+                if let Some(task) = required_tasks.pop() {
+                    if !now_tasks.contains(&task) {
+                        now_tasks.push(task);
+                        println!("c")
+                    }
+                }
+                if let Some(task) = optional_tasks.pop() {
+                    if !now_tasks.contains(&task) {
+                        now_tasks.push(task);
+                        println!("d")
+                    }
+                }
+            }
         }
-        let mut table = prettytable::Table::new();
-        table.set_titles(row![
-            "UUID",
-            "Id",
-            "Name",
-            "Project",
-            "Schedule",
-            "Recurrence"
-        ]);
-        for task in &selected_tasks {
-            let schedule = if let Some(s) = task.schedule {
-                s.to_string()
-            } else {
-                String::new()
-            };
-            let recurrence = if let (Some(r), Some(u)) = (task.recurrence, &task.recurrence_unit) {
-                format!("{}{}", r, u)
-            } else {
-                String::new()
-            };
-            table.add_row(row![
-                task.uuid,
-                task.id,
-                task.name,
-                task.project,
-                schedule,
-                recurrence
-            ]);
+        for task in &mut now_tasks {
+            task.now_date = Some(today);
         }
-        table.printstd();
+        Task::print(&now_tasks);
+        Task::update(now_tasks);
     }
 }

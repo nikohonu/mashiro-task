@@ -1,6 +1,7 @@
 use crate::paths::get_tasks_path;
-use chrono::NaiveDateTime;
+use chrono::{NaiveDate, NaiveDateTime};
 use csv::WriterBuilder;
+use prettytable::row;
 use serde::{Deserialize, Serialize};
 use std::fs::OpenOptions;
 
@@ -16,21 +17,17 @@ pub struct Task {
     pub id: i64,
     pub name: String,
     pub project: String,
-    pub schedule: Option<NaiveDateTime>,
-    pub deadline: Option<NaiveDateTime>,
-    pub recurrence_type: Option<String>,
-    pub recurrence_unit: Option<String>,
-    pub recurrence: Option<i64>,
+    pub schedule: NaiveDateTime,
+    pub recurrence_type: String,
+    pub recurrence_unit: String,
+    pub recurrence: i64,
     pub required: bool,
     pub required_task: Option<String>,
-    #[serde(skip_serializing, skip_deserializing)]
-    pub completions: Vec<NaiveDateTime>,
-    #[serde(skip_serializing, skip_deserializing)]
-    pub intervals: Vec<Interval>,
+    pub now_date: Option<NaiveDate>,
 }
 
 impl Task {
-    pub fn get_tasks() -> Vec<Task> {
+    pub fn all() -> Vec<Task> {
         let tasks_path = get_tasks_path();
         if let Ok(file) = std::fs::File::open(tasks_path) {
             let mut reader = csv::Reader::from_reader(file);
@@ -59,7 +56,7 @@ impl Task {
     }
 
     pub fn get_new_id() -> i64 {
-        let tasks = Task::get_tasks();
+        let tasks = Task::all();
         let mut index = 0;
         for task in tasks {
             index = std::cmp::max(task.id, index);
@@ -67,20 +64,87 @@ impl Task {
         index + 1
     }
 
-    pub fn regenerate_ids() {
-        let tasks = Task::get_tasks();
+    pub fn rewrite(tasks: Vec<Task>) {
         let tasks_path = get_tasks_path();
         let file = OpenOptions::new()
             .write(true)
             .create(true)
+            .truncate(true)
             .open(tasks_path)
             .expect("Can't open file");
         let mut wrt = WriterBuilder::new().has_headers(true).from_writer(file);
-        for (id, task) in tasks.iter().enumerate() {
-            let mut new_task = task.clone();
-            new_task.id = id as i64 + 1;
+        for task in &tasks {
             wrt.serialize(task).expect("I can't write new record.");
         }
         wrt.flush().expect("I cant't write in file.");
+    }
+
+    pub fn regenerate_ids() {
+        let tasks = Task::all();
+        let mut new_tasks = Vec::new();
+        for (id, task) in tasks.iter().enumerate() {
+            let mut new_task = task.clone();
+            new_task.id = id as i64 + 1;
+            new_tasks.push(new_task)
+        }
+        Task::rewrite(new_tasks)
+    }
+
+    pub fn by_id(tasks: &Vec<Task>, id: i64) -> Option<Task> {
+        for task in tasks {
+            if task.id == id {
+                return Some(task.clone());
+            }
+        }
+        None
+    }
+    pub fn update_one(new_task: Task) {
+        Task::update(vec![new_task]);
+    }
+    pub fn update(new_tasks: Vec<Task>) {
+        let mut tasks = Task::all();
+        for new_task in new_tasks {
+            let mut index = 0;
+            for task in &tasks {
+                if task.id == new_task.id {
+                    let _ = std::mem::replace(&mut tasks[index], new_task);
+                    break;
+                }
+                index += 1;
+            }
+        }
+        Task::rewrite(tasks)
+    }
+    pub fn remove(id: i64) {
+        let mut tasks = Task::all();
+        let mut index = 0;
+        for task in &tasks {
+            if task.id == id {
+                break;
+            }
+            index += 1;
+        }
+        tasks.remove(index);
+        for task in &tasks {
+            println!("{:?}", task);
+        }
+        Task::rewrite(tasks)
+    }
+
+    pub fn print(tasks: &Vec<Task>) {
+        let mut table = prettytable::Table::new();
+        table.set_titles(row!["Id", "Name", "Project", "Schedule", "Recurrence"]);
+        for task in tasks {
+            let schedule = task.schedule.to_string();
+            let recurrence = format!("{}{}", task.recurrence, task.recurrence_unit);
+            table.add_row(row![task.id, task.name, task.project, schedule, recurrence]);
+        }
+        table.printstd();
+    }
+}
+
+impl PartialEq for Task {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
     }
 }

@@ -11,7 +11,7 @@ mod task;
 use clap::{CommandFactory, Parser, Subcommand};
 
 #[derive(Parser, Debug)]
-#[command(author("Niko Honu"), version("0.2.1"), about("My personal to-do list app."), long_about = None)]
+#[command(author("Niko Honu"), version("0.3.0"), about("My personal to-do list app."), long_about = None)]
 struct Cli {
     #[command(subcommand)]
     command: Option<Commands>,

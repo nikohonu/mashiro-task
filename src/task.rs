@@ -133,11 +133,21 @@ impl Task {
 
     pub fn print(tasks: &Vec<Task>) {
         let mut table = prettytable::Table::new();
-        table.set_titles(row!["Id", "Name", "Project", "Schedule", "Recurrence"]);
+        table.set_titles(row![
+            "Id",
+            "Name",
+            "Project",
+            "Schedule",
+            "Recurrence",
+            "Required"
+        ]);
         for task in tasks {
             let schedule = task.schedule.to_string();
-            let recurrence = format!("{}{}", task.recurrence, task.recurrence_unit);
-            table.add_row(row![task.id, task.name, task.project, schedule, recurrence]);
+            let recurrence = format!(
+                "{}{}{}",
+                task.recurrence_type, task.recurrence, task.recurrence_unit
+            );
+            table.add_row(row![task.id, task.name, task.project, schedule, recurrence, task.required]);
         }
         table.printstd();
     }

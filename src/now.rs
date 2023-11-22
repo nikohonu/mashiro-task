@@ -6,7 +6,10 @@ use rand::seq::SliceRandom;
 use std::cmp::max;
 
 #[derive(clap::Args, Debug)]
-pub struct NowArgs {}
+pub struct NowArgs {
+    #[arg(short, long, default_value_t = false)]
+    pub full: bool,
+}
 
 fn get_task_by_uuid(tasks: &Vec<Task>, uuid: &str) -> Option<Task> {
     for task in tasks {
@@ -93,7 +96,7 @@ impl NowArgs {
         for task in &mut now_tasks {
             task.now_date = Some(today);
         }
-        Task::print(&now_tasks);
+        Task::print(&now_tasks, !self.full);
         Task::update(now_tasks);
     }
 }

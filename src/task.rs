@@ -1,8 +1,10 @@
 use crate::paths::get_tasks_path;
-use chrono::{NaiveDate, NaiveDateTime};
+use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
 use csv::WriterBuilder;
+use prettytable::format;
 use prettytable::row;
 use serde::{Deserialize, Serialize};
+
 use std::fs::OpenOptions;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -131,23 +133,40 @@ impl Task {
         Task::rewrite(tasks)
     }
 
-    pub fn print(tasks: &Vec<Task>) {
+    pub fn print(tasks: &Vec<Task>, compact: bool) {
         let mut table = prettytable::Table::new();
-        table.set_titles(row![
-            "Id",
-            "Name",
-            "Project",
-            "Schedule",
-            "Recurrence",
-            "Required"
-        ]);
+        if compact {
+            table.set_titles(row!["Id", "Name", "Project", "Schedule", "Recur.", "Req."]);
+            table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
+        } else {
+            table.set_titles(row![
+                "Id",
+                "Name",
+                "Project",
+                "Schedule",
+                "Recurrence",
+                "Required"
+            ]);
+        }
         for task in tasks {
-            let schedule = task.schedule.to_string();
+            let schedule =
+                if compact && task.schedule.time() == NaiveTime::from_hms_opt(0, 0, 0).unwrap() {
+                    task.schedule.date().to_string()
+                } else {
+                    task.schedule.to_string()
+                };
             let recurrence = format!(
                 "{}{}{}",
                 task.recurrence_type, task.recurrence, task.recurrence_unit
             );
-            table.add_row(row![task.id, task.name, task.project, schedule, recurrence, task.required]);
+            table.add_row(row![
+                task.id,
+                task.name,
+                task.project,
+                schedule,
+                recurrence,
+                task.required
+            ]);
         }
         table.printstd();
     }

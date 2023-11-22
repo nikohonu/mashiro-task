@@ -6,12 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
 ### Added
+
 - More fields to the "now" command table.
+- Compact view for the "now" command.
 
 ## [0.2.1] - 2023-11-22
 
 ### Fixed
+
 - Tasks that had a now_date earlier than today were not added to the relevant tasks.
 
 ## [0.2.0] - 2023-11-19

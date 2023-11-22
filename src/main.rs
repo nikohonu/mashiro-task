@@ -13,6 +13,8 @@ use clap::{CommandFactory, Parser, Subcommand};
 #[derive(Parser, Debug)]
 #[command(author("Niko Honu"), version("0.3.0"), about("My personal to-do list app."), long_about = None)]
 struct Cli {
+    #[arg(short, long, default_value_t = false)]
+    full: bool,
     #[command(subcommand)]
     command: Option<Commands>,
 }
@@ -37,6 +39,6 @@ fn main() {
         Some(Commands::RegenerateIds(cmd)) => cmd.run(),
         Some(Commands::Do(cmd)) => cmd.run(),
         Some(Commands::Remove(cmd)) => cmd.run(),
-        _ => now::NowArgs {}.run(),
+        _ => now::NowArgs { full: cli.full }.run(),
     }
 }

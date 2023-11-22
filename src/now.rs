@@ -34,6 +34,8 @@ impl NowArgs {
             if let Some(now_date) = task.now_date {
                 if now_date == today {
                     now_tasks.push(task.clone());
+                } else {
+                    relevant_tasks.push(task.clone())
                 }
             } else if let Some(uuid) = &task.required_task {
                 if get_task_by_uuid(&scheduled_tasks, uuid.as_str()).is_none() {

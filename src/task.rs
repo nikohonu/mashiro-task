@@ -1,5 +1,5 @@
 use crate::paths::get_tasks_path;
-use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
+use chrono::{NaiveDateTime, NaiveTime};
 use csv::WriterBuilder;
 use prettytable::format;
 use prettytable::row;
@@ -25,7 +25,7 @@ pub struct Task {
     pub recurrence: i64,
     pub required: bool,
     pub required_task: Option<String>,
-    pub now_date: Option<NaiveDate>,
+    pub now_datetime: Option<NaiveDateTime>,
 }
 
 impl Task {

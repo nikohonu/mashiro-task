@@ -59,7 +59,8 @@ impl NowArgs {
         let mut now_tasks = Vec::new();
         let mut relevant_tasks = Vec::new();
         for task in &scheduled_tasks {
-            if let Some(now_date) = task.now_date {
+            if let Some(now_datetime) = task.now_datetime {
+                let now_date = now_datetime.date();
                 if now_date == today {
                     now_tasks.push(task.clone());
                 } else {
@@ -118,8 +119,16 @@ impl NowArgs {
             }
         }
         for task in &mut now_tasks {
-            task.now_date = Some(today);
+            if let Some(now_datetime) = task.now_datetime {
+                let now_date = now_datetime.date();
+                if now_date != today {
+                    task.now_datetime = Some(now);
+                }
+            } else {
+                task.now_datetime = Some(now);
+            }
         }
+        now_tasks.sort_by_key(|t| t.now_datetime);
         Task::print(&now_tasks, !self.full);
         Task::update(now_tasks);
     }

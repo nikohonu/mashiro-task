@@ -47,7 +47,7 @@ impl AddArgs {
             recurrence: self.recurrence.to_owned(),
             required: self.required,
             required_task: self.required_task.to_owned(),
-            now_date: None,
+            now_datetime: None,
         };
         Task::append(&t);
         println!(

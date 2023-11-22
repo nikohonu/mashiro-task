@@ -61,7 +61,7 @@ impl DoArgs {
             "c" => calc_new_schedule(now, task.recurrence, &task.recurrence_unit).unwrap(),
             _ => panic!(),
         };
-        task.now_date = None;
+        task.now_datetime = None;
         println!("New schedule: {}", task.schedule);
         Task::update_one(task);
     }

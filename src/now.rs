@@ -1,7 +1,9 @@
 use crate::task::Task;
 use chrono::Local;
+use std::collections::HashSet;
 
 use rand::seq::SliceRandom;
+use rand::Rng;
 
 use std::cmp::max;
 
@@ -20,17 +22,40 @@ fn get_task_by_uuid(tasks: &Vec<Task>, uuid: &str) -> Option<Task> {
     None
 }
 
+fn pop_random_task(tasks: &mut Vec<Task>, project_random: bool) -> Option<Task> {
+    if tasks.is_empty() {
+        None
+    } else {
+        let mut rng = rand::prelude::thread_rng();
+        if project_random {
+            let unique_projects: HashSet<_> =
+                tasks.iter().map(|task| task.project.as_str()).collect();
+            let mut unique_projects: Vec<_> = unique_projects.iter().collect();
+            unique_projects.shuffle(&mut rng);
+            let project = unique_projects.pop().unwrap();
+            loop {
+                let index = rng.gen_range(0..tasks.len());
+                if &tasks[index].project.as_str() == project {
+                    return Some(tasks.remove(index));
+                }
+            }
+        } else {
+            let index = rng.gen_range(0..tasks.len());
+            Some(tasks.remove(index))
+        }
+    }
+}
+
 impl NowArgs {
     pub fn run(&self) {
         let now = Local::now().naive_local();
         let today = now.date();
         let tasks = Task::all();
-        let mut scheduled_tasks = Vec::new();
-        for task in &tasks {
-            if task.schedule <= now {
-                scheduled_tasks.push(task.clone())
-            }
-        }
+        let scheduled_tasks: Vec<_> = tasks
+            .iter()
+            .filter(|task| task.schedule <= now)
+            .cloned()
+            .collect();
         let mut now_tasks = Vec::new();
         let mut relevant_tasks = Vec::new();
         for task in &scheduled_tasks {
@@ -48,13 +73,12 @@ impl NowArgs {
                 relevant_tasks.push(task.clone())
             }
         }
-        relevant_tasks.shuffle(&mut rand::thread_rng());
-        let mut required_tasks: Vec<Task> = relevant_tasks
+        let mut required_tasks: Vec<_> = relevant_tasks
             .clone()
             .into_iter()
             .filter(|task| task.required)
             .collect();
-        let mut optional_tasks: Vec<Task> = relevant_tasks
+        let mut optional_tasks: Vec<_> = relevant_tasks
             .into_iter()
             .filter(|task| !task.required)
             .collect();
@@ -72,23 +96,23 @@ impl NowArgs {
             let mut need_required = max(2 - have_required, 0);
             let mut need_optional = max(1 - have_optional, 0);
             while need_required != 0 && !required_tasks.is_empty() {
-                if let Some(task) = required_tasks.pop() {
+                if let Some(task) = pop_random_task(&mut required_tasks, false) {
                     need_required -= 1;
                     now_tasks.push(task);
                 }
             }
             while need_optional != 0 && !optional_tasks.is_empty() {
-                if let Some(task) = optional_tasks.pop() {
+                if let Some(task) = pop_random_task(&mut optional_tasks, true) {
                     need_optional -= 1;
                     now_tasks.push(task);
                 }
             }
             while (!required_tasks.is_empty() || !optional_tasks.is_empty()) && now_tasks.len() < 3
             {
-                if let Some(task) = required_tasks.pop() {
+                if let Some(task) = pop_random_task(&mut required_tasks, false) {
                     now_tasks.push(task);
                 }
-                if let Some(task) = optional_tasks.pop() {
+                if let Some(task) = pop_random_task(&mut optional_tasks, true) {
                     now_tasks.push(task);
                 }
             }

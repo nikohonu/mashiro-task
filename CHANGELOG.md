@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - More fields to the "now" command table.
 - Compact view for the "now" command.
 
+### Changed
+
+- New random optional task algorithm based on projects
+
 ## [0.2.1] - 2023-11-22
 
 ### Fixed

@@ -3,19 +3,17 @@ use chrono::NaiveDateTime;
 use crate::task::Task;
 #[derive(clap::Args, Debug)]
 pub struct DoArgs {
-    id: i64,
+    id: u64,
 }
 
 fn calc_new_schedule(
     schedule: NaiveDateTime,
-    recurrence: i64,
+    recurrence: u64,
     recurrence_unit: &str,
 ) -> Result<NaiveDateTime, &'static str> {
     match recurrence_unit {
-        "d" => {
-            return Ok(schedule + chrono::Duration::days(recurrence));
-        }
-        _ => return Err("This kind of recurrence unit don't implement yet"),
+        "d" => Ok(schedule + chrono::Duration::days(recurrence as i64)),
+        _ => Err("This kind of recurrence unit don't implement yet"),
     }
 }
 
@@ -62,6 +60,7 @@ impl DoArgs {
             _ => panic!(),
         };
         task.now_datetime = None;
+        task.times_completed += 1;
         println!("New schedule: {}", task.schedule);
         Task::update_one(task);
     }

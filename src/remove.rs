@@ -1,7 +1,7 @@
 use crate::task::Task;
 #[derive(clap::Args, Debug)]
 pub struct RemoveArgs {
-    id: i64,
+    id: u64,
 }
 
 impl RemoveArgs {

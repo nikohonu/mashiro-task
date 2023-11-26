@@ -16,16 +16,18 @@ pub struct Interval {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Task {
     pub uuid: String,
-    pub id: i64,
+    pub created: NaiveDateTime,
+    pub id: u64,
     pub name: String,
     pub project: String,
     pub schedule: NaiveDateTime,
     pub recurrence_type: String,
     pub recurrence_unit: String,
-    pub recurrence: i64,
+    pub recurrence: u64,
     pub required: bool,
     pub required_task: Option<String>,
     pub now_datetime: Option<NaiveDateTime>,
+    pub times_completed: u64,
 }
 
 impl Task {
@@ -57,7 +59,7 @@ impl Task {
         wrt.flush().expect("I cant't write in file.");
     }
 
-    pub fn get_new_id() -> i64 {
+    pub fn get_new_id() -> u64 {
         let tasks = Task::all();
         let mut index = 0;
         for task in tasks {
@@ -86,13 +88,13 @@ impl Task {
         let mut new_tasks = Vec::new();
         for (id, task) in tasks.iter().enumerate() {
             let mut new_task = task.clone();
-            new_task.id = id as i64 + 1;
+            new_task.id = id as u64 + 1;
             new_tasks.push(new_task)
         }
         Task::rewrite(new_tasks)
     }
 
-    pub fn by_id(tasks: &Vec<Task>, id: i64) -> Option<Task> {
+    pub fn by_id(tasks: &Vec<Task>, id: u64) -> Option<Task> {
         for task in tasks {
             if task.id == id {
                 return Some(task.clone());
@@ -106,18 +108,16 @@ impl Task {
     pub fn update(new_tasks: Vec<Task>) {
         let mut tasks = Task::all();
         for new_task in new_tasks {
-            let mut index = 0;
-            for task in &tasks {
+            for (index, task) in tasks.iter().enumerate() {
                 if task.id == new_task.id {
                     let _ = std::mem::replace(&mut tasks[index], new_task);
                     break;
                 }
-                index += 1;
             }
         }
         Task::rewrite(tasks)
     }
-    pub fn remove(id: i64) {
+    pub fn remove(id: u64) {
         let mut tasks = Task::all();
         let mut index = 0;
         for task in &tasks {
@@ -136,7 +136,7 @@ impl Task {
     pub fn print(tasks: &Vec<Task>, compact: bool) {
         let mut table = prettytable::Table::new();
         if compact {
-            table.set_titles(row!["Id", "Name", "Project", "Schedule", "Recur.", "Req."]);
+            table.set_titles(row!["Id", "Name", "Project", "Schedule", "Recur.", "Req.", "Comp."]);
             table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
         } else {
             table.set_titles(row![
@@ -145,7 +145,8 @@ impl Task {
                 "Project",
                 "Schedule",
                 "Recurrence",
-                "Required"
+                "Required",
+                "Times completed"
             ]);
         }
         for task in tasks {
@@ -165,7 +166,8 @@ impl Task {
                 task.project,
                 schedule,
                 recurrence,
-                task.required
+                task.required,
+                task.times_completed
             ]);
         }
         table.printstd();

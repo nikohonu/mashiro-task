@@ -1,5 +1,5 @@
 use crate::paths::get_tasks_path;
-use chrono::{NaiveDateTime, NaiveTime};
+use chrono::{Local, NaiveDateTime, NaiveTime};
 use csv::WriterBuilder;
 use prettytable::format;
 use prettytable::row;
@@ -31,6 +31,10 @@ pub struct Task {
 }
 
 impl Task {
+    pub fn get_efficiency(&self) -> f64 {
+        let days = (Local::now().naive_local() - self.created).num_days() + 1;
+        (self.times_completed as f64 / days as f64) * self.recurrence as f64
+    }
     pub fn all() -> Vec<Task> {
         let tasks_path = get_tasks_path();
         if let Ok(file) = std::fs::File::open(tasks_path) {
@@ -136,7 +140,9 @@ impl Task {
     pub fn print(tasks: &Vec<Task>, compact: bool) {
         let mut table = prettytable::Table::new();
         if compact {
-            table.set_titles(row!["Id", "Name", "Project", "Schedule", "Recur.", "Req.", "Comp."]);
+            table.set_titles(row![
+                "Id", "Name", "Project", "Schedule", "Recur.", "Req.", "Eff.", "Comp."
+            ]);
             table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
         } else {
             table.set_titles(row![
@@ -146,27 +152,26 @@ impl Task {
                 "Schedule",
                 "Recurrence",
                 "Required",
+                "Efficiency",
                 "Times completed"
             ]);
         }
         for task in tasks {
-            let schedule =
-                if compact && task.schedule.time() == NaiveTime::from_hms_opt(0, 0, 0).unwrap() {
-                    task.schedule.date().to_string()
-                } else {
-                    task.schedule.to_string()
-                };
-            let recurrence = format!(
-                "{}{}{}",
-                task.recurrence_type, task.recurrence, task.recurrence_unit
-            );
             table.add_row(row![
                 task.id,
                 task.name,
                 task.project,
-                schedule,
-                recurrence,
+                if compact && task.schedule.time() == NaiveTime::from_hms_opt(0, 0, 0).unwrap() {
+                    task.schedule.date().to_string()
+                } else {
+                    task.schedule.to_string()
+                },
+                format!(
+                    "{}{}{}",
+                    task.recurrence_type, task.recurrence, task.recurrence_unit
+                ),
                 task.required,
+                format!("{:.2}", task.get_efficiency()),
                 task.times_completed
             ]);
         }

@@ -11,6 +11,8 @@ use std::cmp::max;
 pub struct NowArgs {
     #[arg(short, long, default_value_t = false)]
     pub full: bool,
+    #[arg(short, long, default_value_t = false)]
+    pub random: bool,
 }
 
 fn get_task_by_uuid(tasks: &Vec<Task>, uuid: &str) -> Option<Task> {
@@ -130,6 +132,13 @@ impl NowArgs {
         }
         now_tasks.sort_by_key(|t| t.now_datetime);
         Task::print(&now_tasks, !self.full);
-        Task::update(now_tasks);
+        Task::update(now_tasks.clone());
+        let task = pop_random_task(&mut now_tasks, false).unwrap();
+        if self.random {
+            println!(
+                "A whisper from the void urges you to choose this task: {}. {} - {}",
+                task.id, task.name, task.project
+            )
+        }
     }
 }

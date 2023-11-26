@@ -15,6 +15,8 @@ use clap::{CommandFactory, Parser, Subcommand};
 struct Cli {
     #[arg(short, long, default_value_t = false)]
     full: bool,
+    #[arg(short, long, default_value_t = false)]
+    pub random: bool,
     #[command(subcommand)]
     command: Option<Commands>,
 }
@@ -39,6 +41,10 @@ fn main() {
         Some(Commands::RegenerateIds(cmd)) => cmd.run(),
         Some(Commands::Do(cmd)) => cmd.run(),
         Some(Commands::Remove(cmd)) => cmd.run(),
-        _ => now::NowArgs { full: cli.full }.run(),
+        _ => now::NowArgs {
+            full: cli.full,
+            random: cli.random,
+        }
+        .run(),
     }
 }

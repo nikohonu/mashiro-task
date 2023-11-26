@@ -8,9 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.4.0] - 2023-11-26
 
 ### Added
+
 - Show how many times the task has been done.
-- Task efficiency = (task completions / (today - created)) * recurrence
+- Task efficiency = (task completions / (today - created)) * recurrence.
 - Option for the "now" command to choose a random task.
+- "do" command can invoke the "now" command with the -n argument of the "do" command.
 
 ## [0.3.0] - 2023-11-22
 

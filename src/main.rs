@@ -16,7 +16,7 @@ struct Cli {
     #[arg(short, long, default_value_t = false)]
     full: bool,
     #[arg(short, long, default_value_t = false)]
-    pub random: bool,
+    random: bool,
     #[command(subcommand)]
     command: Option<Commands>,
 }

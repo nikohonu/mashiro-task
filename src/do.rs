@@ -1,9 +1,16 @@
+use crate::now::NowArgs;
 use chrono::NaiveDateTime;
 
 use crate::task::Task;
 #[derive(clap::Args, Debug)]
 pub struct DoArgs {
     id: u64,
+    #[arg(short, long, default_value_t = false)]
+    now: bool,
+    #[arg(short, long, default_value_t = false)]
+    full: bool,
+    #[arg(short, long, default_value_t = false)]
+    random: bool,
 }
 
 fn calc_new_schedule(
@@ -63,5 +70,12 @@ impl DoArgs {
         task.times_completed += 1;
         println!("New schedule: {}", task.schedule);
         Task::update_one(task);
+        if self.now {
+            NowArgs {
+                full: self.full,
+                random: self.random,
+            }
+            .run()
+        }
     }
 }

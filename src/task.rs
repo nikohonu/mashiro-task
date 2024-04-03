@@ -24,9 +24,7 @@ pub struct Task {
     pub recurrence_type: String,
     pub recurrence_unit: String,
     pub recurrence: u64,
-    pub required: bool,
     pub required_task: Option<String>,
-    pub now_datetime: Option<NaiveDateTime>,
     pub times_completed: u64,
 }
 
@@ -141,7 +139,7 @@ impl Task {
         let mut table = prettytable::Table::new();
         if compact {
             table.set_titles(row![
-                "Id", "Name", "Project", "Schedule", "Recur.", "Req.", "Eff.", "Comp."
+                "Id", "Name", "Project", "Schedule", "Recur.", "Eff.", "Comp."
             ]);
             table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
         } else {
@@ -151,7 +149,6 @@ impl Task {
                 "Project",
                 "Schedule",
                 "Recurrence",
-                "Required",
                 "Efficiency",
                 "Times completed"
             ]);
@@ -170,7 +167,7 @@ impl Task {
                     "{}{}{}",
                     task.recurrence_type, task.recurrence, task.recurrence_unit
                 ),
-                task.required,
+                // task.required,
                 format!("{:.2}", task.get_efficiency()),
                 task.times_completed
             ]);

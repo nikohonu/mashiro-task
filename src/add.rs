@@ -14,16 +14,12 @@ pub struct AddArgs {
     schedule: Option<NaiveDateTime>,
     #[arg(short = 't', long, default_value_t = String::from("c"), value_parser = clap::builder::PossibleValuesParser::new(["+", "++", ".+", "c"]))]
     recurrence_type: String,
-    #[arg(short = 'u', long, default_value_t = String::from("d"), value_parser = clap::builder::PossibleValuesParser::new(["d", "w"]))]
+    #[arg(short = 'u', long, default_value_t = String::from("d"), value_parser = clap::builder::PossibleValuesParser::new(["d", "w", "m"]))]
     recurrence_unit: String,
     #[arg(short, long, default_value_t = 1)]
     recurrence: u64,
-    #[arg(short = 'm', long, default_value_t = false)]
-    required: bool,
     #[arg(long)]
     required_task: Option<String>,
-    // #[arg(short, long, default_value_t = false)]
-    // json: bool,
 }
 impl AddArgs {
     pub fn run(&self) {
@@ -42,9 +38,7 @@ impl AddArgs {
             recurrence_type: self.recurrence_type.to_owned(),
             recurrence_unit: self.recurrence_unit.to_owned(),
             recurrence: self.recurrence.to_owned(),
-            required: self.required,
             required_task: self.required_task.to_owned(),
-            now_datetime: None,
             times_completed: 0,
         };
         Task::append(&t);

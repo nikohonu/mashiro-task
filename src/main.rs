@@ -11,7 +11,7 @@ mod task;
 use clap::{CommandFactory, Parser, Subcommand};
 
 #[derive(Parser, Debug)]
-#[command(author("Niko Honu"), version("0.4.0"), about("A cli to-do list app that focuses on recurring tasks and displays only three current tasks."), long_about = None)]
+#[command(author("Niko Honu"), version("0.5.0"), about("A cli to-do list app that focuses on recurring tasks and displays only three current tasks."), long_about = None)]
 struct Cli {
     #[arg(short, long, default_value_t = false)]
     full: bool,

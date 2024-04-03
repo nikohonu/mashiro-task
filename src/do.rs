@@ -20,6 +20,7 @@ fn calc_new_schedule(
 ) -> Result<NaiveDateTime, &'static str> {
     match recurrence_unit {
         "d" => Ok(schedule + chrono::Duration::days(recurrence as i64)),
+        "w" => Ok(schedule + chrono::Duration::days(recurrence as i64 * 7)),
         _ => Err("This kind of recurrence unit don't implement yet"),
     }
 }

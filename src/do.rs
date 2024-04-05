@@ -72,7 +72,10 @@ impl DoArgs {
         ));
         println!(
             "New schedule for task {} {} - {}: {}",
-            &task.id, &task.name, &task.sphere, schedule
+            &task.id,
+            &task.name,
+            &task.sphere,
+            task.schedule.unwrap()
         );
         Task::update_one(task);
     }

@@ -10,6 +10,7 @@ impl ListArgs {
     pub fn run(&self) {
         let mut tasks = Task::all();
         tasks.sort_unstable_by_key(|task| task.order);
+        tasks.sort_by_key(|task| task.schedule);
         Task::print(&tasks, !self.full);
     }
 }

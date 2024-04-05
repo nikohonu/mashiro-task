@@ -1,5 +1,6 @@
 use clap::Command;
 use clap_complete::{generate, Generator, Shell};
+
 #[derive(clap::Args, Debug)]
 pub struct CompletionArgs {
     #[arg(required = true)]

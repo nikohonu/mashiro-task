@@ -1,47 +1,50 @@
-extern crate dirs;
-
-use crate::task::Task;
+use uuid::Uuid;
 
 use chrono::{Local, NaiveDateTime};
 
-use uuid::Uuid;
+use crate::{recurrence::Recurrence, task::Task};
+
 #[derive(clap::Args, Debug)]
 pub struct AddArgs {
     name: String,
-    #[arg(short, long, default_value_t = String::from("Inbox"))]
-    project: String,
-    #[arg(short, long)]
+    sphere: String,
+    #[arg(short, long, default_value_t = 0)]
+    order: u8,
+    #[arg(short = 'd', long)]
     schedule: Option<NaiveDateTime>,
-    #[arg(short = 't', long, default_value_t = String::from("c"), value_parser = clap::builder::PossibleValuesParser::new(["+", "++", ".+", "c"]))]
-    recurrence_type: String,
-    #[arg(short = 'u', long, default_value_t = String::from("d"), value_parser = clap::builder::PossibleValuesParser::new(["d", "w", "m"]))]
-    recurrence_unit: String,
-    #[arg(short, long, default_value_t = 1)]
-    recurrence: u64,
-    #[arg(long)]
-    required_task: Option<String>,
+    #[arg(short, long)]
+    recurrence: Option<String>,
 }
+
 impl AddArgs {
     pub fn run(&self) {
-        let schedule = if let Some(s) = self.schedule {
-            s
+        let recurrence = match &self.recurrence {
+            Some(r_string) => match Recurrence::from_string(r_string.as_str()) {
+                Ok(r) => Some(r),
+                Err(_) => panic!("You provide invalid recurrence."),
+            },
+            _ => None,
+        };
+        let schedule = if recurrence.is_some() && self.schedule.is_none() {
+            Some(NaiveDateTime::from(Local::now().date_naive()))
         } else {
-            Local::now().naive_local()
+            self.schedule
         };
-        let t = Task {
+        let task = Task {
             uuid: Uuid::new_v4().to_string(),
-            created: Local::now().naive_local(),
             id: Task::get_new_id(),
+            order: self.order,
+            created: Local::now().naive_local(),
             name: self.name.to_owned(),
-            project: self.project.to_owned(),
+            sphere: self.sphere.to_owned(),
             schedule,
-            recurrence_type: self.recurrence_type.to_owned(),
-            recurrence_unit: self.recurrence_unit.to_owned(),
-            recurrence: self.recurrence.to_owned(),
-            required_task: self.required_task.to_owned(),
-            times_completed: 0,
+            recurrence,
         };
-        Task::append(&t);
-        println!("{}", serde_json::to_string_pretty(&t).unwrap_or_default())
+        Task::append(&task, false);
+        println!("Task created!");
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&task).unwrap_or_default()
+        )
     }
 }

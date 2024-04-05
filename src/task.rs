@@ -1,38 +1,26 @@
-use crate::paths::get_tasks_path;
-use chrono::{Local, NaiveDateTime, NaiveTime};
-use csv::WriterBuilder;
-use prettytable::format;
-use prettytable::row;
-use serde::{Deserialize, Serialize};
-
 use std::fs::OpenOptions;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Interval {
-    pub start: NaiveDateTime,
-    pub end: Option<NaiveDateTime>,
-}
+use chrono::{NaiveDateTime, NaiveTime};
+use csv::WriterBuilder;
+use prettytable::{format, row};
+use serde::{Deserialize, Serialize};
+
+use crate::paths::{get_archive_path, get_tasks_path};
+use crate::recurrence::Recurrence;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Task {
     pub uuid: String,
-    pub created: NaiveDateTime,
     pub id: u64,
+    pub order: u8,
     pub name: String,
-    pub project: String,
-    pub schedule: NaiveDateTime,
-    pub recurrence_type: String,
-    pub recurrence_unit: String,
-    pub recurrence: u64,
-    pub required_task: Option<String>,
-    pub times_completed: u64,
+    pub sphere: String,
+    pub schedule: Option<NaiveDateTime>,
+    pub recurrence: Option<Recurrence>,
+    pub created: NaiveDateTime,
 }
 
 impl Task {
-    pub fn get_efficiency(&self) -> f64 {
-        let days = (Local::now().naive_local() - self.created).num_days() + 1;
-        (self.times_completed as f64 / days as f64) * self.recurrence as f64
-    }
     pub fn all() -> Vec<Task> {
         let tasks_path = get_tasks_path();
         if let Ok(file) = std::fs::File::open(tasks_path) {
@@ -45,9 +33,18 @@ impl Task {
             Vec::new()
         }
     }
-    pub fn append(task: &Task) {
-        let tasks_path = get_tasks_path();
-        let is_header = !tasks_path.exists();
+
+    pub fn append(task: &Task, archive: bool) {
+        let tasks_path = if archive {
+            get_archive_path()
+        } else {
+            get_tasks_path()
+        };
+        let is_header = if tasks_path.exists() && tasks_path.metadata().unwrap().len() == 0 {
+            true
+        } else {
+            !tasks_path.exists()
+        };
         let file = OpenOptions::new()
             .write(true)
             .append(true)
@@ -104,9 +101,19 @@ impl Task {
         }
         None
     }
+    // pub fn by_uuid(tasks: &Vec<Task>, uuid: &str) -> Option<Task> {
+    //     for task in tasks {
+    //         if task.uuid == uuid {
+    //             return Some(task.clone());
+    //         }
+    //     }
+    //     None
+    // }
+
     pub fn update_one(new_task: Task) {
         Task::update(vec![new_task]);
     }
+
     pub fn update(new_tasks: Vec<Task>) {
         let mut tasks = Task::all();
         for new_task in new_tasks {
@@ -119,6 +126,7 @@ impl Task {
         }
         Task::rewrite(tasks)
     }
+
     pub fn remove(id: u64) {
         let mut tasks = Task::all();
         let mut index = 0;
@@ -129,9 +137,6 @@ impl Task {
             index += 1;
         }
         tasks.remove(index);
-        for task in &tasks {
-            println!("{:?}", task);
-        }
         Task::rewrite(tasks)
     }
 
@@ -139,37 +144,40 @@ impl Task {
         let mut table = prettytable::Table::new();
         if compact {
             table.set_titles(row![
-                "Id", "Name", "Project", "Schedule", "Recur.", "Eff.", "Comp."
+                "Id", "Ord.", "Name", "Sphere", "Sched.", "Recur.", "Dur."
             ]);
             table.set_format(*format::consts::FORMAT_NO_BORDER_LINE_SEPARATOR);
         } else {
             table.set_titles(row![
                 "Id",
+                "Order",
                 "Name",
-                "Project",
+                "Sphere",
                 "Schedule",
                 "Recurrence",
-                "Efficiency",
-                "Times completed"
+                "Duration"
             ]);
         }
         for task in tasks {
             table.add_row(row![
                 task.id,
+                task.order,
                 task.name,
-                task.project,
-                if compact && task.schedule.time() == NaiveTime::from_hms_opt(0, 0, 0).unwrap() {
-                    task.schedule.date().to_string()
+                task.sphere,
+                if let Some(schedule) = task.schedule {
+                    if compact && schedule.time() == NaiveTime::from_hms_opt(0, 0, 0).unwrap() {
+                        schedule.date().to_string()
+                    } else {
+                        schedule.to_string()
+                    }
                 } else {
-                    task.schedule.to_string()
+                    String::new()
                 },
-                format!(
-                    "{}{}{}",
-                    task.recurrence_type, task.recurrence, task.recurrence_unit
-                ),
-                // task.required,
-                format!("{:.2}", task.get_efficiency()),
-                task.times_completed
+                if let Some(recurrence) = &task.recurrence {
+                    recurrence.to_string()
+                } else {
+                    String::new()
+                }
             ]);
         }
         table.printstd();

@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Week recurrence for "do" command.
+- Implemented weekly, hourly, and yearly recurrence functionality for the "do" command.
+
+### Changed
+- Completely overhauled and rewritten nearly all modules, resulting in compatibility issues with previous task.csv file.
 
 ## [0.5.0] - 2024-04-03
 

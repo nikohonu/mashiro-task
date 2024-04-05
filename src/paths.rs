@@ -8,3 +8,7 @@ pub fn get_data_local_path() -> std::path::PathBuf {
 pub fn get_tasks_path() -> std::path::PathBuf {
     get_data_local_path().join("tasks.csv")
 }
+
+pub fn get_archive_path() -> std::path::PathBuf {
+    get_data_local_path().join("archive.csv")
+}

@@ -1,9 +1,13 @@
 extern crate dirs;
+
 mod add;
 mod completion;
 mod r#do;
+mod interval;
+mod list;
 mod now;
 mod paths;
+mod recurrence;
 mod regenerate_ids;
 mod remove;
 mod task;
@@ -25,6 +29,7 @@ struct Cli {
 enum Commands {
     Add(add::AddArgs),
     Completion(completion::CompletionArgs),
+    List(list::ListArgs),
     Now(now::NowArgs),
     Do(r#do::DoArgs),
     Remove(remove::RemoveArgs),
@@ -37,6 +42,7 @@ fn main() {
     match &cli.command {
         Some(Commands::Add(cmd)) => cmd.run(),
         Some(Commands::Completion(cmd)) => cmd.run(&mut Cli::command()),
+        Some(Commands::List(cmd)) => cmd.run(),
         Some(Commands::Now(cmd)) => cmd.run(),
         Some(Commands::RegenerateIds(cmd)) => cmd.run(),
         Some(Commands::Do(cmd)) => cmd.run(),

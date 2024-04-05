@@ -9,7 +9,7 @@ impl RemoveArgs {
         let tasks = Task::all();
         let task = Task::by_id(&tasks, self.id);
         if task.is_none() {
-            println!("There is no task with id={}", self.id);
+            println!("There is no task with id = {}", self.id);
             return;
         }
         let task = task.unwrap();

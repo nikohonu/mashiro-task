@@ -14,7 +14,7 @@ dirs = "5.0.1"
 prettytable-rs = "0.10.0"
 rand = "0.8.5"
 serde_json = "1.0.115"
-serde = { version = "1.0.197", features = ["derive"] }
+serde = { version = "1.0.199", features = ["derive"] }
 regex = "1.10.4"
 
 [dependencies.uuid]

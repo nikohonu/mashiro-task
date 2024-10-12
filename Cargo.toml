@@ -5,4 +5,6 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.89"
+chrono = "0.4.38"
 home = "0.5.9"
+regex = "1.11.0"

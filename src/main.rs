@@ -1,56 +1,62 @@
-extern crate dirs;
-
-mod add;
-mod completion;
-mod r#do;
-mod interval;
-mod list;
-mod now;
-mod paths;
-mod recurrence;
-mod regenerate_ids;
-mod remove;
 mod task;
 
-use clap::{CommandFactory, Parser, Subcommand};
+use anyhow::{Result};
+use home::home_dir;
+use std::{
+    fs::{File},
+    io::{BufRead, BufReader},
+    path::PathBuf,
+};
 
-#[derive(Parser, Debug)]
-#[command(author("Niko Honu"), version("0.5.0"), about("A cli to-do list app that focuses on recurring tasks and displays only three current tasks."), long_about = None)]
-struct Cli {
-    #[arg(short, long, default_value_t = false)]
-    full: bool,
-    #[arg(short, long, default_value_t = false)]
-    random: bool,
-    #[command(subcommand)]
-    command: Option<Commands>,
-}
+use crate::task::Task;
 
-#[derive(Subcommand, Debug)]
-enum Commands {
-    Add(add::AddArgs),
-    Completion(completion::CompletionArgs),
-    List(list::ListArgs),
-    Now(now::NowArgs),
-    Do(r#do::DoArgs),
-    Remove(remove::RemoveArgs),
-    RegenerateIds(regenerate_ids::RegenerateIdsArgs),
-}
-
-fn main() {
-    let cli = Cli::parse();
-    let _command = Cli::command();
-    match &cli.command {
-        Some(Commands::Add(cmd)) => cmd.run(),
-        Some(Commands::Completion(cmd)) => cmd.run(&mut Cli::command()),
-        Some(Commands::List(cmd)) => cmd.run(),
-        Some(Commands::Now(cmd)) => cmd.run(),
-        Some(Commands::RegenerateIds(cmd)) => cmd.run(),
-        Some(Commands::Do(cmd)) => cmd.run(),
-        Some(Commands::Remove(cmd)) => cmd.run(),
-        _ => now::NowArgs {
-            full: cli.full,
-            random: cli.random,
+fn get_md_files(path: PathBuf) -> Result<Vec<PathBuf>> {
+    let mut result: Vec<PathBuf> = Vec::new();
+    for dir_entry in path.read_dir()? {
+        let path = dir_entry?.path();
+        if path.is_dir() {
+            result.append(&mut get_md_files(path)?);
+            continue;
         }
-        .run(),
+        if let Some(extension) = path.extension() {
+            if extension == "md" {
+                result.push(path);
+            }
+        }
     }
+    return Ok(result);
+}
+
+fn normalize_file(path: PathBuf) -> Result<()> {
+    let file = File::open(path)?;
+    let reader = BufReader::new(file);
+    let mut lines: Vec<String> = Vec::new();
+    for line in reader.lines() {
+        let line = line?;
+        if line.starts_with("- [ ] ") {
+            let task = Task::from_string(&line)?;
+            lines.push(task.to_string());
+        } else {
+            lines.push(line);
+        }
+    }
+    for line in lines {
+        println!("{}", line);
+    }
+    return Ok({});
+}
+
+fn main() -> Result<()> {
+    // get path
+    let home_path = home_dir().expect("Can't get home dir");
+    let home_path = home_path.as_path();
+    let path = home_path.join("documents/notes");
+    // get all files
+    let paths = get_md_files(path)?;
+    // show conten
+    for path in paths {
+        _ = normalize_file(path);
+        // println!("{}", fs::read_to_string(path)?);
+    }
+    return Ok({});
 }

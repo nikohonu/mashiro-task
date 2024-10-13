@@ -4,10 +4,9 @@ mod recurrence;
 mod task;
 mod tasks;
 
-use anyhow::{anyhow, Result};
-use clap::{Parser, Subcommand};
+use anyhow::Result;
+use clap::Parser;
 use commands::Commands;
-use tasks::Tasks;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]

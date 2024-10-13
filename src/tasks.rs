@@ -1,7 +1,4 @@
-use crate::{
-    datetime::DateTime,
-    task::{Task, TASK_START},
-};
+use crate::task::{Task, TASK_START};
 use anyhow::{anyhow, Result};
 use comfy_table::{modifiers::UTF8_SOLID_INNER_BORDERS, presets::UTF8_FULL, Table};
 use home::home_dir;
@@ -9,7 +6,7 @@ use rand::{distributions::Alphanumeric, Rng};
 use std::{
     cmp::Ordering,
     fs::File,
-    io::{BufRead, BufReader, BufWriter, Write},
+    io::{BufRead, BufReader},
     path::PathBuf,
 };
 
@@ -101,17 +98,6 @@ impl Tasks {
             .map(char::from)
             .collect();
         random_string
-    }
-
-    pub fn get_by_id<'a>(self: &'a Self, id: &'a str) -> Option<&'a Task> {
-        for task in &self.tasks {
-            if let Some(task_id) = &task.id {
-                if task_id == id {
-                    return Some(task);
-                }
-            }
-        }
-        None
     }
 
     pub fn print(&self) {

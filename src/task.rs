@@ -1,4 +1,3 @@
-use std::cmp::Ordering;
 use std::iter::Peekable;
 
 use std::{
@@ -8,8 +7,6 @@ use std::{
 };
 
 use anyhow::{anyhow, Result};
-use chrono::format::parse;
-use clap::builder::Str;
 
 use crate::datetime::DateTime;
 use crate::recurrence::Recurrence;

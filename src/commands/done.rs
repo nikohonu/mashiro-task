@@ -1,6 +1,6 @@
 use anyhow::Result;
 
-use crate::{task::Task, tasks::Tasks};
+use crate::tasks::Tasks;
 #[derive(clap::Args, Debug)]
 pub struct Done {
     id: String,

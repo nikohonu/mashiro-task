@@ -74,7 +74,7 @@ impl Tasks {
         } else {
             return Err(anyhow!("Can't get home dir"));
         };
-        Ok(home_path.join("documents/notes"))
+        Ok(home_path.join("local-git/notes"))
     }
 
     pub fn new() -> Result<Tasks> {
